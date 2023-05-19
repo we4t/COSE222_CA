@@ -1,0 +1,323 @@
+000 : 1110 101 0 000000000000000000000110
+cond: always
+funct3: branch and branch with link
+l: 0
+imm24: 6
+next_pc: 8
+
+001 : 1110 101 0 111111111111111111111110
+cond: always
+funct3: branch and branch with link
+l: 0
+imm24: -2
+next_pc: 1
+
+002 : 1110 101 0 000000000000000010100111
+cond: always
+funct3: branch and branch with link
+l: 0
+imm24: 167
+next_pc: AB
+
+003 : 1110 101 0 111111111111111111111110
+cond: always
+funct3: branch and branch with link
+l: 0
+imm24: -2
+next_pc: 3
+
+004 : 1110 101 0 111111111111111111111110
+cond: always
+funct3: branch and branch with link
+l: 0
+imm24: -2
+next_pc: 4
+
+005 : 1110 101 0 111111111111111111111110
+cond: always
+funct3: branch and branch with link
+l: 0
+imm24: -2
+next_pc: 5
+
+006 : 1110 101 0 000000000000000010100100
+cond: always
+funct3: branch and branch with link
+l: 0
+imm24: 164
+next_pc: AC
+
+007 : 1110 101 0 111111111111111111111110
+cond: always
+funct3: branch and branch with link
+l: 0
+imm24: -2
+next_pc: 7
+
+008 : 1110 010 11001 1111 0010 111011001000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11001
+pubwl: Load Instruction
+Rn: F
+Rd: 2
+imm12: 3784
+
+009 : 1110 001 1101 0 0000 0000 0000 01000000
+cond : always
+funct3 : Data processing immediate
+opcode : MOV Move
+Rd := shifter_operand (no first operand)
+s: 0
+Rn: 0
+Rd: 0
+rotate: 0
+imm8: 64
+
+00A : 1110 010 11000 0010 0000 000000010000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 2
+Rd: 0
+imm12: 16
+
+00B : 1110 010 11000 0010 0000 000000010100
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 2
+Rd: 0
+imm12: 20
+
+00C : 1110 010 11000 0010 0000 000000011000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 2
+Rd: 0
+imm12: 24
+
+00D : 1110 010 11000 0010 0000 000000011100
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 2
+Rd: 0
+imm12: 28
+
+00E : 1110 010 11000 0010 0000 000000100000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 2
+Rd: 0
+imm12: 32
+
+00F : 1110 010 11000 0010 0000 000000100100
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 2
+Rd: 0
+imm12: 36
+
+010 : 1110 001 1101 0 0000 0000 0000 00111111
+cond : always
+funct3 : Data processing immediate
+opcode : MOV Move
+Rd := shifter_operand (no first operand)
+s: 0
+Rn: 0
+Rd: 0
+rotate: 0
+imm8: 63
+
+011 : 1110 010 11000 0010 0000 000000101000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 2
+Rd: 0
+imm12: 40
+
+012 : 1110 001 1101 0 0000 0000 0000 00001000
+cond : always
+funct3 : Data processing immediate
+opcode : MOV Move
+Rd := shifter_operand (no first operand)
+s: 0
+Rn: 0
+Rd: 0
+rotate: 0
+imm8: 8
+
+013 : 1110 010 11000 0010 0000 000000101100
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 2
+Rd: 0
+imm12: 44
+
+014 : 1110 010 11001 1111 0011 111010011100
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11001
+pubwl: Load Instruction
+Rn: F
+Rd: 3
+imm12: 3740
+
+015 : 1110 010 11001 1111 0001 111010011100
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11001
+pubwl: Load Instruction
+Rn: F
+Rd: 1
+imm12: 3740
+
+016 : 1110 010 11000 0011 0001 000000000000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 3
+Rd: 1
+imm12: 0
+
+017 : 1110 010 11001 1111 1001 111010011000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11001
+pubwl: Load Instruction
+Rn: F
+Rd: 9
+imm12: 3736
+
+018 : 1110 001 1101 0 0000 1000 0000 00000000
+cond : always
+funct3 : Data processing immediate
+opcode : MOV Move
+Rd := shifter_operand (no first operand)
+s: 0
+Rn: 0
+Rd: 8
+rotate: 0
+imm8: 0
+
+019 : 1110 010 11000 1001 1000 000000000000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 9
+Rd: 8
+imm12: 0
+
+01A : 1110 010 11000 1001 1000 000000000100
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 9
+Rd: 8
+imm12: 4
+
+01B : 1110 010 11000 1001 1000 000000001000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 9
+Rd: 8
+imm12: 8
+
+01C : 1110 010 11000 1001 1000 000000001100
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 9
+Rd: 8
+imm12: 12
+
+01D : 1110 010 11000 1001 1000 000000010000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 9
+Rd: 8
+imm12: 16
+
+01E : 1110 010 11000 1001 1000 000000010100
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 9
+Rd: 8
+imm12: 20
+
+01F : 1110 010 11000 1001 1000 000000011000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11000
+pubwl: Store Instruction
+Rn: 9
+Rd: 8
+imm12: 24
+
+020 : 1110 010 11001 1111 1101 111001111000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11001
+pubwl: Load Instruction
+Rn: F
+Rd: D
+imm12: 3704
+
+021 : 1110 010 11001 0011 0001 001000000000
+cond: always
+funct3: Load/store immediate offset
+pubwl: 11001
+pubwl: Load Instruction
+Rn: 3
+Rd: 1
+imm12: 512
+
+022 : 1110 001 1010 1 0001 0000 0000 00000001
+cond : always
+funct3 : Data processing immediate
+opcode : CMP Compare
+Update flags after Rn - shifter_operand
+s: 1
+Rn: 1
+Rd: 0
+rotate: 0
+imm8: 1
+
+023 : 0000 101 0 000000000000000000000000
+cond: EQ, z == 0
+funct3: branch and branch with link
+l: 0
+imm24: 0
+next_pc: 25
+
+024 : 1110 101 0 111111111111111111111011
+cond: always
+funct3: branch and branch with link
+l: 0
+imm24: -5
+next_pc: 21
+
