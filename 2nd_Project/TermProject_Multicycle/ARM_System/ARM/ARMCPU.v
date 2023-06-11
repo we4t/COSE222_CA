@@ -119,15 +119,15 @@ endmodule
 module armreduced(
 	input clk,
 	input reset,
-	output[31:0] pc,
-	input[31:0] inst,
 	input nIRQ,
-	output [3:0] be,
-	output[31:0] memaddr,
-	output memwrite,
+	input[31:0] inst,
+	input[31:0] readdata,
 	output memread,
-	output[31:0] writedata,
-	input[31:0] readdata);
+	output memwrite,
+	output [3:0] be,
+	output[31:0] pc,
+	output[31:0] memaddr,
+	output[31:0] writedata);
 	
 	//signals
   wire IRwrite,regwrite,NZCVwrite;

@@ -61,144 +61,138 @@ ALUop_dict = {
 }
 
 
-def get_instructions(inst):
-    if inst == "B":
+def get_instructions(flags, zero):
+    if flags[0:3] == "111" or (zero == 1 and flags[3] == "0" or flags[3] == "1" and zero == 0):
+        if flags[4] == "1":  # B, BL
+            if flags[7] == "0":  # B
+                return [
+                    3,
+                    "01110110000101000xxx",
+                    "0000xxxx000000100xxx",
+                    "00010110001001000100",
+                ]
+
+            else:  # BL
+                return [
+                    4,
+                    "01110110000101000xxx",
+                    "0000xxxx000000100xxx",
+                    "00011001001001000100",
+                    "00010101xxxxxxxx0xxx",
+                ]
+
+        elif flags[5] == "1":  # LDR, STR
+            if flags[11] == "0":
+                # STR
+                # Load/store immediate offset 	NZCV010PUBW0
+                # Load/store register offset 	NZCV011PUBW0
+                # ex_flags						111001011000
+                # index							0123456789
+                flag5 = "00"
+                if flags[6] == "1":
+                    flag5 = "11"
+                else:
+                    flag5 = "10"
+                # decode immediate / register offest
+
+                flag3 = "0100" if flags[8] == "1" else "0010"
+                # decode whether offset is added from base (U == 1) or subtracted from base (U == 0)
+                flag0 = "1"
+                # decode the destination of regbdst
+
+                return [
+                    4,
+                    "01110110000101000xxx",
+                    "0000xxxx000000100xxx",
+                    "0001010101" + flag5 + flag3 + "001" + flag0,
+                    "1000xxxxxxxxxxxx0xxx",
+                ]
+
+            else:
+                # LDR
+                # Load/store immediate offset 	NZCV010PUBW1
+                # Load/store register offset 	NZCV011PUBW1
+                # ex_flags						111001011001
+                # index							0123456789
+
+                flag5 = "11" if flags[6] == "1" else "10"
+                # decode immediate / register offest
+                flag3 = "0100" if flags[8] == "1" else "0010"
+                # decode whether offset is added from base (U == 1) or subtracted from base (U == 0)
+                flag0 = "0"
+                # decode the destination of regbdst
+
+                return [
+                    5,
+                    "01110110000101000xxx",
+                    "0000xxxx000000100xxx",
+                    "0001010101" + flag5 + flag3 + "001" + flag0,
+                    "0010xxxxxxxxxxxx0xxx",
+                    "00010000xxxxxxxx0xxx"
+                ]
+
+        elif flags[7:11] == "1010":
+            # CMP
+            # Data processing immediate shift 	: 	NZCV000opcdS
+            # Data processing immediate 		: 	NZCV001opcdS
+            # ex_flags = 							111000110101
+            # index									0123456789
+
+            flag5 = "10" if flags[6] == "1" else "11"
+            # decode whether shift or not
+
+            return [
+                3,
+                "01110110000101000xxx",
+                "0000xxxx000000100xxx",
+                "0001010101" + flag5 + "00101000",
+            ]
+
+        elif flags[7:11] == "1101":
+            # MOV
+            # Data processing immediate shift 	: 	NZCV000opcdS
+            # Data processing immediate 		: 	NZCV001opcdS
+            # ex_flags = 							111000111010
+            # index									0123456789
+
+            flag5 = "10" if flags[6] == "1" else "11"
+            # decode whether shift or not
+            flag0 = flags[11]
+            # set flag, update NZCV
+
+            return [
+                4,
+                "01110110000101000xxx",
+                "0000xxxx000000100xxx",
+                "0001010110" + flag5 + "0100" + flag0 + "000",
+                "00010001xxxxxxxx0xxx",
+            ]
+
+        else:
+            # Data processing immediate shift 	: 	NZCV000opcdS
+            # Data processing immediate 		: 	NZCV001opcdS
+            # ex_flags = 							111000001001
+            # index									0123456789
+
+            flag5 = "10" if flags[6] == "1" else "11"
+            # decode whether shift or not
+            flags_str = flags[7:]
+            # opcode + NZCV update flag
+
+            return [
+                4,
+                "01110110000101000xxx",
+                "0000xxxx000000100xxx",
+                "0001010101" + flag5 + flags_str + "000",
+                "00010001xxxxxxxx0xxx",
+            ]
+
+    else:
         return [
-            "01110110000101000xxx",
-            "0000xxxx000000100xxx",
-            "00010110001001000100",
-            "xxxxxxxxxxxxxxxxxxxx",
-            "xxxxxxxxxxxxxxxxxxxx"
-        ]
-
-    elif inst == "BL":
-        return [
-            "01110110000101000xxx",
-            "0000xxxx000000100xxx",
-            "00011001001001000100",
-            "00010101xxxxxxxx0xxx",
-            "xxxxxxxxxxxxxxxxxxxx"
-        ]
-
-    elif inst == "STR":
-        # Load/store immediate offset 	NZCV010PUBW0
-        # Load/store register offset 	NZCV011PUBW0
-        # ex_flags						111001011000
-        # index							0123456789
-
-        ex_flags = "111001011000"
-        flags = ex_flags
-
-        flag5 = "11" if flags[6] == "1" else "10"
-        # decode immediate / register offest
-        flag3 = "0100" if flags[8] == "1" else "0010"
-        # decode whether offset is added from base (U == 1) or subtracted from base (U == 0)
-        flag0 = "1"
-        # decode the destination of regbdst
-
-        return [
-            "01110110000101000xxx",
-            "0000xxxx000000100xxx",
-            "0001010101" + flag5 + flag3 + "001" + flag0,
-            "1000xxxxxxxxxxxx0xxx",
-            "xxxxxxxxxxxxxxxxxxxx"
-        ]
-
-    elif inst == "LDR":
-        # Load/store immediate offset 	NZCV010PUBW1
-        # Load/store register offset 	NZCV011PUBW1
-        # ex_flags						111001011001
-        # index							0123456789
-
-        ex_flags = "111001011001"
-        flags = ex_flags
-
-        flag5 = "11" if flags[6] == "1" else "10"
-        # decode immediate / register offest
-        flag3 = "0100" if flags[8] == "1" else "0010"
-        # decode whether offset is added from base (U == 1) or subtracted from base (U == 0)
-        flag0 = "0"
-        # decode the destination of regbdst
-
-        return [
-            "01110110000101000xxx",
-            "0000xxxx000000100xxx",
-            "0001010101" + flag5 + flag3 + "001" + flag0,
-            "0010xxxxxxxxxxxx0xxx",
-            "00010000xxxxxxxx0xxx"
-        ]
-
-    elif inst == "CMP":
-        # Data processing immediate shift 	: 	NZCV000opcdS
-        # Data processing immediate 		: 	NZCV001opcdS
-        # ex_flags = 							111000110101
-        # index									0123456789
-
-        ex_flags = "111000110101"
-        flags = ex_flags
-
-        flag5 = "10" if flags[6] == "1" else "11"
-        # decode whether shift or not
-
-        return [
-            "01110110000101000xxx",
-            "0000xxxx000000100xxx",
-            "0001010101" + flag5 + "00101000",
-            "xxxxxxxxxxxxxxxxxxxx",
-            "xxxxxxxxxxxxxxxxxxxx"
-        ]
-
-    elif inst == "MOV":
-        # Data processing immediate shift 	: 	NZCV000opcdS
-        # Data processing immediate 		: 	NZCV001opcdS
-        # ex_flags = 							111000111010
-        # index									0123456789
-
-        ex_flags = "111000111010"
-        flags = ex_flags
-
-        flag5 = "10" if flags[6] == "1" else "11"
-        # decode whether shift or not
-        flag0 = flags[11]
-        # set flag, update NZCV
-
-        return [
-            "01110110000101000xxx",
-            "0000xxxx000000100xxx",
-            "0001010110" + flag5 + "0100" + flag0 + "000",
-            "00010001xxxxxxxx0xxx",
-            "xxxxxxxxxxxxxxxxxxxx"
-        ]
-
-    elif inst == "ALU":
-        # Data processing immediate shift 	: 	NZCV000opcdS
-        # Data processing immediate 		: 	NZCV001opcdS
-        # ex_flags = 							111000001001
-        # index									0123456789
-
-        ex_flags = "111000001001"
-        flags = ex_flags
-
-        flag5 = "10" if flags[6] == "1" else "11"
-        # decode whether shift or not
-        flags_str = flags[7:]
-        # opcode + NZCV update flag
-
-        return [
-            "01110110000101000xxx",
-            "0000xxxx000000100xxx",
-            "0001010101" + flag5 + flags_str + "000",
-            "00010001xxxxxxxx0xxx",
-            "xxxxxxxxxxxxxxxxxxxx"
-        ]
-
-    elif inst == "Recovery":
-        return [
+            3,
             "01110110000101000xxx",
             "0000xxxx000000100xxx",
             "00010101xxxxxxxx0xxx",
-            "xxxxxxxxxxxxxxxxxxxx",
-            "xxxxxxxxxxxxxxxxxxxx"
         ]
 
 
