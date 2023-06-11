@@ -66,6 +66,7 @@ def get_instructions(flags, zero):
         if flags[4] == "1":  # B, BL
             if flags[7] == "0":  # B
                 return [
+                    "B",
                     3,
                     "01110110000101000xxx",
                     "0000xxxx000000100xxx",
@@ -74,6 +75,7 @@ def get_instructions(flags, zero):
 
             else:  # BL
                 return [
+                    "BL",
                     4,
                     "01110110000101000xxx",
                     "0000xxxx000000100xxx",
@@ -101,6 +103,7 @@ def get_instructions(flags, zero):
                 # decode the destination of regbdst
 
                 return [
+                    "STR",
                     4,
                     "01110110000101000xxx",
                     "0000xxxx000000100xxx",
@@ -123,6 +126,7 @@ def get_instructions(flags, zero):
                 # decode the destination of regbdst
 
                 return [
+                    "LDR",
                     5,
                     "01110110000101000xxx",
                     "0000xxxx000000100xxx",
@@ -142,6 +146,7 @@ def get_instructions(flags, zero):
             # decode whether shift or not
 
             return [
+                "CMP",
                 3,
                 "01110110000101000xxx",
                 "0000xxxx000000100xxx",
@@ -161,6 +166,7 @@ def get_instructions(flags, zero):
             # set flag, update NZCV
 
             return [
+                "MOV",
                 4,
                 "01110110000101000xxx",
                 "0000xxxx000000100xxx",
@@ -169,6 +175,7 @@ def get_instructions(flags, zero):
             ]
 
         else:
+            # ALU
             # Data processing immediate shift 	: 	NZCV000opcdS
             # Data processing immediate 		: 	NZCV001opcdS
             # ex_flags = 							111000001001
@@ -180,6 +187,7 @@ def get_instructions(flags, zero):
             # opcode + NZCV update flag
 
             return [
+                "ALU",
                 4,
                 "01110110000101000xxx",
                 "0000xxxx000000100xxx",
@@ -189,6 +197,7 @@ def get_instructions(flags, zero):
 
     else:
         return [
+            "Recovery",
             3,
             "01110110000101000xxx",
             "0000xxxx000000100xxx",
@@ -197,8 +206,11 @@ def get_instructions(flags, zero):
 
 
 def print_signals(instruction):
-    s = get_instructions(instruction)
-    tmparr = [instruction, "Mwrite", "IRwrite", "Mread", "regwrite", "regdst",
+    arr = get_instructions(instruction, 1)
+    instruction_description = arr[0]
+    total = arr[1]
+    s = arr[2:]
+    tmparr = [instruction_description, "Mwrite", "IRwrite", "Mread", "regwrite", "regdst",
               "regsrc", "ALUsrcA", "ALUsrcB", "ALUop", "NZCVwrite", "immsrc", "regbdst"]
     worksheet.append(tmparr)
     for step in range(len(s)):
@@ -247,7 +259,8 @@ def print_signals(instruction):
 
 
 # Example usage
-instructions_arr = ["B", "BL", "STR", "LDR", "CMP", "MOV", "ALU", "Recovery"]
+# put your instructions here (string)
+instructions_arr = ["1110001110100000", "111000101000", "111001011001", "000010100000"]
 
 for instruction in instructions_arr:
     print(f"Instruction: {instruction}")
@@ -255,4 +268,4 @@ for instruction in instructions_arr:
     print()
     worksheet.append([])
 
-workbook.save('controlsig_analyze.xlsx')
+workbook.save('number4.xlsx')
