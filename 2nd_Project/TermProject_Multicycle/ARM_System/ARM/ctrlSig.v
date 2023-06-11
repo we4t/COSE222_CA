@@ -144,3 +144,25 @@ module signalunit
   assign regbdst=s[step][0];
   
 endmodule
+
+module newControlUnit(
+	input [11:0] inst,
+	output PCSrc,
+	output RegWrite,
+	output MemtoReg,
+	output MemWrite,
+	output Branch,
+	output [3:0] InstOp,
+	output FlagWrite,
+	output [1:0] immSrc
+	output ALUSrc1,
+	output ALUSrc2);
+
+endmodule
+
+module newCondUnit(
+	input FlagWriteE,
+	input CondE,
+	input FlagsE,
+	output CondExE);
+endmodule
