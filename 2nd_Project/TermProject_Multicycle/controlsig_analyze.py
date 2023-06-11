@@ -89,7 +89,7 @@ def get_instructions(flags, zero):
                 # Load/store immediate offset 	NZCV010PUBW0
                 # Load/store register offset 	NZCV011PUBW0
                 # ex_flags						111001011000
-                # index							0123456789
+                
                 flag5 = "00"
                 if flags[6] == "1":
                     flag5 = "11"
@@ -116,7 +116,7 @@ def get_instructions(flags, zero):
                 # Load/store immediate offset 	NZCV010PUBW1
                 # Load/store register offset 	NZCV011PUBW1
                 # ex_flags						111001011001
-                # index							0123456789
+                
 
                 flag5 = "11" if flags[6] == "1" else "10"
                 # decode immediate / register offest
@@ -140,7 +140,7 @@ def get_instructions(flags, zero):
             # Data processing immediate shift 	: 	NZCV000opcdS
             # Data processing immediate 		: 	NZCV001opcdS
             # ex_flags = 							111000110101
-            # index									0123456789
+            
 
             flag5 = "10" if flags[6] == "1" else "11"
             # decode whether shift or not
@@ -158,7 +158,7 @@ def get_instructions(flags, zero):
             # Data processing immediate shift 	: 	NZCV000opcdS
             # Data processing immediate 		: 	NZCV001opcdS
             # ex_flags = 							111000111010
-            # index									0123456789
+            
 
             flag5 = "10" if flags[6] == "1" else "11"
             # decode whether shift or not
@@ -179,7 +179,7 @@ def get_instructions(flags, zero):
             # Data processing immediate shift 	: 	NZCV000opcdS
             # Data processing immediate 		: 	NZCV001opcdS
             # ex_flags = 							111000001001
-            # index									0123456789
+            
 
             flag5 = "10" if flags[6] == "1" else "11"
             # decode whether shift or not
@@ -196,6 +196,7 @@ def get_instructions(flags, zero):
             ]
 
     else:
+        # Recovery
         return [
             "Recovery",
             3,
