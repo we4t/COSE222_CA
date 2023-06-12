@@ -145,6 +145,29 @@ module signalunit
   
 endmodule
 
+module newHazardUnit(
+    // Data Hazard
+    input [3:0] read1, // reg1[i_RegSrc1_D]
+    input [3:0] read2, // reg2[i_RegSrc2_D]
+    input o_RegWrite_E,
+    input [3:0] o_WA3_E,
+    input o_RegWrite_M,
+    input [3:0] o_WA3_M,
+    input o_RegWrite_W,
+    input [3:0] o_WA3_W,
+    
+    // Control Hazard
+    input i_PCSrc_D,
+
+    // Output. if dataHzrd == 1, Detected.
+    output dataHzrdDetected,
+    output ctrlHzrdDetected);
+
+    assign dataHzrdDetected = (o_RegWrite_E && (read1 == o_WA3_E || read2 == o_WA3_E)) || (o_RegWrite_M && (read1 == o_WA3_M || read2 == o_WA3_M)) || (o_RegWrite_W && (read1 == o_WA3_W || read2 == o_WA3_W));
+    assign ctrlHzrdDetected = i_PCSrc_D;
+
+endmodule
+
 module newControlUnit(
    input [31:20] inst,
    input [3:0] Flags,
@@ -226,3 +249,4 @@ module newControlUnit(
    assign {RegSrc1, RegSrc2, immSrc, BL, NZCVWrite, ALUSrc1, ALUSrc2, InstOp, PCSrc, MemWrite, MemRead, RegWrite, MemtoReg} = control;
    
 endmodule
+

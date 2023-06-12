@@ -1,0 +1,12 @@
+[||Compilation Report||Analysis & Synthesis||Connectivity Checks||Port Connectivity Checks: "armreduced:arm_cpu"]
+COLUMN_WIDTHS=78L,38L,52L,393L,
+OUTPUT_SECTION=1
+PAGE_ORIENTATION=0
+[||Compilation Report||Analysis & Synthesis||Connectivity Checks||Port Connectivity Checks: "armreduced:arm_cpu|registerfile:registerFile|register:register15"]
+COLUMN_WIDTHS=166L,38L,52L,410L,
+OUTPUT_SECTION=1
+PAGE_ORIENTATION=0
+[||Compilation Report||Analysis & Synthesis||Connectivity Checks||Port Connectivity Checks: "armreduced:arm_cpu|stage_register_idex:IDEX"]
+COLUMN_WIDTHS=75L,38L,52L,669L,
+OUTPUT_SECTION=1
+PAGE_ORIENTATION=0
