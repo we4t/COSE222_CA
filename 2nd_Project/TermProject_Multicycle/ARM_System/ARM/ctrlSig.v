@@ -164,33 +164,34 @@ module newControlUnit(
    
    // MEM
    output MemWrite,
+   output MemRead,
    
    // WB
    output RegWrite,
    output MemtoReg);
    
-   reg [15:0] control;
+   reg [16:0] control;
    
    always @ (*) begin
       if ((inst[31] && inst[30] && inst[29]) || (Flags[3] ^ inst[28])) begin // AL or EQ or NE 
          if(inst[27]) begin //B, BL
             if(~inst[24]) begin //B
-               control = 16'b1010001001001000;
-               // control = 16'b1010001001001xxx;
+               control = 17'b10100010010010000;
+               // control = 17'b1010001001001xxxx;
             end
             else begin //BL
-               control = 16'b1010101001001000;
-               // control = 16'b1010101001001xxx;
+               control = 17'b10101010010010000;
+               // control = 17'b1010101001001xxxx;
             end
          end
          
          else if(inst[26]) begin //LDR, STR
             if(~inst[20]) begin //STR
-               control = {7'b0101001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 4'b0100};
-               // control = {7'b0101001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 4'b01xx};
+               control = {7'b0101001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 5'b01000};
+               // control = {7'b0101001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 5'b010xx};
             end
             else begin //LDR
-               control = {7'b0001001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 4'b0011};
+               control = {7'b0001001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 5'b00111};
             end
          end
          
@@ -204,24 +205,24 @@ module newControlUnit(
                6 : //SBC
                12 : //ORR*/
                10 : begin //CMP
-                  control = {7'b0000011, ~inst[25], 8'b00100000};
-                  // control = {7'b0000011, ~inst[25], 8'b00100xxx};
+                  control = {7'b0000011, ~inst[25], 9'b001000000};
+                  // control = {7'b0000011, ~inst[25], 9'b00100xxxx};
                end
                13 : begin //MOV
-                  control = {5'b00000, inst[20], 1'b0, ~inst[25], 8'b01000010};
-                  // control = {5'b00000, inst[20], 1'b0, ~inst[25], 8'b01000x10};
+                  control = {5'b00000, inst[20], 1'b0, ~inst[25], 9'b01000010};
+                  // control = {5'b00000, inst[20], 1'b0, ~inst[25], 9'b01000xx10};
                end
                default : begin //ALU
-                  control = {5'b00000, inst[20], 1'b0, ~inst[25], inst[24:21], 4'b0010};
-                  // control = {5'b00000, inst[20], 1'b0, ~inst[25], inst[24:21], 4'b0x10};
+                  control = {5'b00000, inst[20], 1'b0, ~inst[25], inst[24:21], 5'b00010};
+                  // control = {5'b00000, inst[20], 1'b0, ~inst[25], inst[24:21], 5'b0xx10};
                end
             endcase
          end
       else begin // Recovery
-         control = 16'b0000000000000000;
+         control = 17'b00000000000000000;
       end
    end
    
-   assign {RegSrc1, RegSrc2, immSrc, BL, NZCVWrite, ALUSrc1, ALUSrc2, InstOp, PCSrc, MemWrite, RegWrite, MemtoReg} = control;
+   assign {RegSrc1, RegSrc2, immSrc, BL, NZCVWrite, ALUSrc1, ALUSrc2, InstOp, PCSrc, MemWrite, MemRead, RegWrite, MemtoReg} = control;
    
 endmodule
