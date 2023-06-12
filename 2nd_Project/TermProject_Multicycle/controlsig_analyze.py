@@ -261,7 +261,7 @@ def print_signals(instruction):
 
 # Example usage
 # put your instructions here (string)
-instructions_arr = ["1110001110100000", "111000101000", "111001011001", "000010100000"]
+instructions_arr = ["111000011010", "111000111010"]
 
 for instruction in instructions_arr:
     print(f"Instruction: {instruction}")
@@ -269,4 +269,4 @@ for instruction in instructions_arr:
     print()
     worksheet.append([])
 
-workbook.save('number4.xlsx')
+workbook.save('MOV.xlsx')

@@ -1,11 +1,11 @@
 module signalcontrol(
-	input[11:0] flags,
-	input zero,
-	output reg [2:0] total,
-	output reg [19:0] s2,
-	output reg [19:0] s3,
-	output reg [19:0] s4);
-	
+   input[11:0] flags,
+   input zero,
+   output reg [2:0] total,
+   output reg [19:0] s2,
+   output reg [19:0] s3,
+   output reg [19:0] s4);
+   
  always @ (*) begin
   if((flags[11]&flags[10]&flags[9])||(flags[8]^zero)) begin
    if(flags[7]) begin //B, BL
@@ -76,41 +76,41 @@ module signalcontrol(
 endmodule 
 
 module oneAdder(
-	input clk,
-	input reset,
-	input [2:0] current,
-	output reg[2:0] regout);
-	
-	wire last;
-	
-	assign last=current==regout;
-	
-	always @ (posedge clk,posedge reset)
-	if(reset)
-		regout<='b000;
-	else if(last)
-		regout<='b000;
-	else
-		regout<=regout+'b001;	
+   input clk,
+   input reset,
+   input [2:0] current,
+   output reg[2:0] regout);
+   
+   wire last;
+   
+   assign last=current==regout;
+   
+   always @ (posedge clk,posedge reset)
+   if(reset)
+      regout<='b000;
+   else if(last)
+      regout<='b000;
+   else
+      regout<=regout+'b001;   
 endmodule
 
 module signalunit
-	(input clk,
-	 input reset,
-	 input[11:0] flags,
-	 input zero,
-	 output Mwrite,
-	 output IRwrite,
-	 output Mread,
-	 output regwrite,
-	 output[1:0] regdst,
-	 output[1:0] regsrc,
-	 output[1:0] ALUsrcA,
-	 output[1:0] ALUsrcB,
-	 output[3:0] ALUop,
-	 output NZCVwrite,
-	 output [1:0] immsrc,
-	 output regbdst);
+   (input clk,
+    input reset,
+    input[11:0] flags,
+    input zero,
+    output Mwrite,
+    output IRwrite,
+    output Mread,
+    output regwrite,
+    output[1:0] regdst,
+    output[1:0] regsrc,
+    output[1:0] ALUsrcA,
+    output[1:0] ALUsrcB,
+    output[3:0] ALUop,
+    output NZCVwrite,
+    output [1:0] immsrc,
+    output regbdst);
   
   wire [19:0] s [4:0];
   
@@ -123,12 +123,12 @@ module signalunit
   oneAdder Step(.clk (clk), .reset (reset), .current (total), .regout (step));
   
   signalcontrol bringSignal(
-	.flags (flags),
-	.zero (zero),
-	.total (total),
-	.s2 (s[2]),
-	.s3 (s[3]),
-	.s4 (s[4]));  
+   .flags (flags),
+   .zero (zero),
+   .total (total),
+   .s2 (s[2]),
+   .s3 (s[3]),
+   .s4 (s[4]));  
   
   assign Mwrite=s[step][19];
   assign IRwrite=s[step][18];
@@ -146,23 +146,82 @@ module signalunit
 endmodule
 
 module newControlUnit(
-	input [11:0] inst,
-	output PCSrc,
-	output RegWrite,
-	output MemtoReg,
-	output MemWrite,
-	output Branch,
-	output [3:0] InstOp,
-	output FlagWrite,
-	output [1:0] immSrc
-	output ALUSrc1,
-	output ALUSrc2);
-
-endmodule
-
-module newCondUnit(
-	input FlagWriteE,
-	input CondE,
-	input FlagsE,
-	output CondExE);
+   input [31:20] inst,
+   input [3:0] Flags,
+   
+   // IDRF
+   output RegSrc1,
+   output RegSrc2,
+   output [1:0]immSrc,
+   output BL,
+   
+   // EXE
+   output NZCVWrite,
+   output ALUSrc1,
+   output ALUSrc2,
+   output [3:0] InstOp,
+   output PCSrc,
+   
+   // MEM
+   output MemWrite,
+   
+   // WB
+   output RegWrite,
+   output MemtoReg);
+   
+   reg [15:0] control;
+   
+   always @ (*) begin
+      if ((inst[31] && inst[30] && inst[29]) || (Flags[3] ^ inst[28])) begin // AL or EQ or NE 
+         if(inst[27]) begin //B, BL
+            if(~inst[24]) begin //B
+               control = 16'b1010001001001000;
+               // control = 16'b1010001001001xxx;
+            end
+            else begin //BL
+               control = 16'b1010101001001000;
+               // control = 16'b1010101001001xxx;
+            end
+         end
+         
+         else if(inst[26]) begin //LDR, STR
+            if(~inst[20]) begin //STR
+               control = {7'b0101001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 4'b0100};
+               // control = {7'b0101001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 4'b01xx};
+            end
+            else begin //LDR
+               control = {7'b0001001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 4'b0011};
+            end
+         end
+         
+         else // ALU
+            case(inst[24:21])/*
+               0 : //AND
+               1 : //EOR
+               2 : //SUB
+               4 : //ADD
+               5 : //ADC
+               6 : //SBC
+               12 : //ORR*/
+               10 : begin //CMP
+                  control = {7'b0000011, ~inst[25], 8'b00100000};
+                  // control = {7'b0000011, ~inst[25], 8'b00100xxx};
+               end
+               13 : begin //MOV
+                  control = {5'b00000, inst[20], 1'b0, ~inst[25], 8'b01000010};
+                  // control = {5'b00000, inst[20], 1'b0, ~inst[25], 8'b01000x10};
+               end
+               default : begin //ALU
+                  control = {5'b00000, inst[20], 1'b0, ~inst[25], inst[24:21], 4'b0010};
+                  // control = {5'b00000, inst[20], 1'b0, ~inst[25], inst[24:21], 4'b0x10};
+               end
+            endcase
+         end
+      else begin // Recovery
+         control = 16'b0000000000000000;
+      end
+   end
+   
+   assign {RegSrc1, RegSrc2, immSrc, BL, NZCVWrite, ALUSrc1, ALUSrc2, InstOp, PCSrc, MemWrite, RegWrite, MemtoReg} = control;
+   
 endmodule
