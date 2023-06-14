@@ -174,9 +174,9 @@ module registerfile(
 
 endmodule
 module stage_register_ifid (
-    input clk, 
-    input reset, 
-    input flush, 
+    input clk,
+    input reset,
+    input flush,
     input stop,
     input [31:0] i_inst_F,
     output [31:0] o_inst_D
@@ -186,15 +186,15 @@ module stage_register_ifid (
         .regin(i_inst_F),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(inst_D)
     );
     assign o_inst_D = inst_D;
 endmodule
 module stage_register_idex (
-    input clk, 
-    input reset, 
-    input flush, 
+    input clk,
+    input reset,
+    input flush,
     input stop,
     input [31:0] i_read1_D,
     input [31:0] i_read2_D,
@@ -220,7 +220,7 @@ module stage_register_idex (
     output o_MemtoReg_E,
     output o_MemWrite_E,
     output [3:0] o_InstOp_E,
-    output o_ALUSrc1_E,   
+    output o_ALUSrc1_E,  
     output o_ALUSrc2_E,
     output [3:0] o_WA3_E,
     output [4:0] o_shmt5_E,
@@ -245,20 +245,20 @@ module stage_register_idex (
     wire NZCVWrite_E;
     wire [3:0] Cond_E;
     wire [3:0] Flags_E;
-    
+   
 	register_4bit reg_Cond_E (
         .regin(i_Cond_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(Cond_E)
     );  
-      
+     
     register_4bit reg_Flags_E (
         .regin(i_Flags_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(Flags_E)
     );
 
@@ -266,7 +266,7 @@ module stage_register_idex (
         .regin(i_read1_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(read1_E)
     );
 
@@ -274,7 +274,7 @@ module stage_register_idex (
         .regin(i_read2_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(read2_E)
     );
 
@@ -282,7 +282,7 @@ module stage_register_idex (
         .regin(i_imm32_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(imm32_E)
     );
 
@@ -290,7 +290,7 @@ module stage_register_idex (
         .regin(i_PCSrc_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(PCSrc_E)
     );
 
@@ -298,7 +298,7 @@ module stage_register_idex (
         .regin(i_RegWrite_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(RegWrite_E)
     );
 
@@ -306,7 +306,7 @@ module stage_register_idex (
         .regin(i_MemtoReg_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(MemtoReg_E)
     );
 
@@ -314,7 +314,7 @@ module stage_register_idex (
         .regin(i_MemWrite_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(MemWrite_E)
     );
 
@@ -322,7 +322,7 @@ module stage_register_idex (
         .regin(i_InstOp_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(InstOp_E)
     );
 
@@ -330,7 +330,7 @@ module stage_register_idex (
         .regin(i_ALUSrc1_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(ALUSrc1_E)
     );
 
@@ -338,7 +338,7 @@ module stage_register_idex (
         .regin(i_ALUSrc2_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(ALUSrc2_E)
     );
 
@@ -346,7 +346,7 @@ module stage_register_idex (
 		.regin(i_WA3_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(WA3_E)
 	);
 
@@ -354,15 +354,15 @@ module stage_register_idex (
         .regin(i_shmt5_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(shmt5_E)
     );
-    
+   
     register_1bit reg_MemRead_E(
 		.regin(i_MemRead_D),
 		.clk(clk),
 		.write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
 		.regout(MemRead_E)
 	);
 	
@@ -370,7 +370,7 @@ module stage_register_idex (
 		.regin(i_NZCVWrite_D),
 		.clk(clk),
 		.write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
 		.regout(NZCVWrite_E));
 	
 
@@ -393,9 +393,9 @@ module stage_register_idex (
 
 endmodule
 module stage_register_exmem (
-    input clk, 
-    input reset, 
-    input flush, 
+    input clk,
+    input reset,
+    input flush,
     input stop,
     input [31:0] i_ALUResult_E,
     input [31:0] i_WriteData_E,
@@ -425,7 +425,7 @@ module stage_register_exmem (
         .regin(i_ALUResult_E),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(ALUOut_M)
     );
 
@@ -433,7 +433,7 @@ module stage_register_exmem (
         .regin(i_WriteData_E),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(WriteData_M)
     );
 
@@ -441,7 +441,7 @@ module stage_register_exmem (
         .regin(i_WA3_E),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(WA3_M)
     );
 
@@ -449,7 +449,7 @@ module stage_register_exmem (
         .regin(i_RegWrite_E),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(RegWrite_M)
     );
 
@@ -457,7 +457,7 @@ module stage_register_exmem (
         .regin(i_MemtoReg_E),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(MemtoReg_M)
     );
 
@@ -465,15 +465,15 @@ module stage_register_exmem (
         .regin(i_MemWrite_E),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(MemWrite_M)
     );
-    
+   
     register_1bit reg_MemRead_M (
         .regin(i_MemRead_E),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(MemRead_M)
     );
 
@@ -487,9 +487,9 @@ module stage_register_exmem (
 
 endmodule
 module stage_register_memwb (
-    input clk, 
-    input reset, 
-    input flush, 
+    input clk,
+    input reset,
+    input flush,
     input stop,
 	input i_RegWrite_M,
 	input i_MemtoReg_M,
@@ -510,7 +510,7 @@ module stage_register_memwb (
         .regin(i_RegWrite_M),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(RegWrite_W)
     );
 
@@ -518,7 +518,7 @@ module stage_register_memwb (
         .regin(i_MemtoReg_M),
         .clk(clk),
         .write(~stop),
-        .reset(reset),
+        .reset(reset||flush),
         .regout(MemtoReg_W)
     );
 
@@ -526,7 +526,7 @@ module stage_register_memwb (
 		.regin(i_ALUOut_M),
 		.clk(clk),
 		.write(~stop),
-		.reset(reset),
+		.reset(reset||flush),
 		.regout(ALUOut_W)
 	);
 
@@ -534,7 +534,7 @@ module stage_register_memwb (
 		.regin(i_WA3_M),
 		.clk(clk),
 		.write(~stop),
-		.reset(reset),
+		.reset(reset||flush),
 		.regout(WA3_W)
 	);
 
@@ -655,8 +655,8 @@ module armreduced(
 	stage_register_memwb MEMWB(
     .clk(clk),
     .reset(reset),
-    .flush(),
-    .stop(),
+    .flush('b0),
+    .stop('b0),
 	.i_RegWrite_M(o_RegWrite_M),
 	.i_MemtoReg_M(o_MemtoReg_M),
 	.i_ALUOut_M(o_ALUOut_M),
@@ -669,8 +669,8 @@ module armreduced(
 	stage_register_exmem EXMEM(
 	.clk(clk),
     .reset(reset),
-    .flush(),
-    .stop(),
+    .flush('b0),
+    .stop('b0),
     .i_ALUResult_E(i_ALUResult_E),
     .i_WriteData_E(i_WriteData_E),
     .i_WA3_E(o_WA3_E),
@@ -692,10 +692,10 @@ module armreduced(
 	assign be = 'b1111;
 
 	stage_register_idex IDEX(
-    .clk(clk), 
-    .reset(reset), 
-    .flush(flushIDEX), 
-    .stop(),
+    .clk(clk),
+    .reset(reset),
+    .flush(flushIDEX),
+    .stop('b0),
     .i_read1_D(i_read1_D),
     .i_read2_D(i_read2_D),
     .i_imm32_D(i_imm32_D),
@@ -720,7 +720,7 @@ module armreduced(
     .o_MemtoReg_E(o_MemtoReg_E),
     .o_MemWrite_E(o_MemWrite_E),
     .o_InstOp_E(o_InstOp_E),
-    .o_ALUSrc1_E(o_ALUSrc1_E),   
+    .o_ALUSrc1_E(o_ALUSrc1_E),  
     .o_ALUSrc2_E(o_ALUSrc2_E),
 	.o_WA3_E(o_WA3_E),
     .o_shmt5_E(o_shmt5_E),
@@ -756,11 +756,11 @@ module armreduced(
 	);
 	
 	//----------stage registers-----------
-	stage_register_ifid IFID(.clk(clk), 
-	.reset(reset), 
-	.flush(flushIFID), 
-	.stop(stallIFID), 
-	.i_inst_F(inst), 
+	stage_register_ifid IFID(.clk(clk),
+	.reset(reset),
+	.flush(flushIFID),
+	.stop(stallIFID),
+	.i_inst_F(inst),
 	.o_inst_D(o_inst_D));
 	assign reg2_D[0] = o_inst_D[3:0];
 	assign reg2_D[1] = o_inst_D[15:12];
@@ -770,10 +770,10 @@ module armreduced(
     newControlUnit ControlUnit(
 	.inst(o_inst_D[27:20]),
 	.Rd(o_inst_D[15:12]),
-    .RegSrc1(i_RegSrc1_D), 
-    .RegSrc2(i_RegSrc2_D), 
-    .immSrc(immSrc_D), 
-    .BL(BL), 
+    .RegSrc1(i_RegSrc1_D),
+    .RegSrc2(i_RegSrc2_D),
+    .immSrc(immSrc_D),
+    .BL(BL),
     .NZCVWrite(i_NZCVWrite_D),
     .ALUSrc1(i_ALUSrc1_D),
     .ALUSrc2(i_ALUSrc2_D),
@@ -803,11 +803,10 @@ module armreduced(
     assign PCNext[1] = i_ALUResult_E;
 	assign DataHzrdPCNext[0] = PCNext[o_PCSrc_E && CondExE];
     assign DataHzrdPCNext[1] = PCNext[0] - 4; // current pc, same
-    registerfile registerFile(.clk(clk), .reset(reset), .reg1(reg1_D[i_RegSrc1_D]), 
-    .reg2(reg2_D[i_RegSrc2_D]), .regdst(o_WA3_W), .regsrc(Result_W[o_MemtoReg_W]), 
-    .R15(DataHzrdPCNext[dataHzrdDetected]), .BL(BL), .we(o_RegWrite_W), 
+    registerfile registerFile(.clk(clk), .reset(reset), .reg1(reg1_D[i_RegSrc1_D]),
+    .reg2(reg2_D[i_RegSrc2_D]), .regdst(o_WA3_W), .regsrc(Result_W[o_MemtoReg_W]),
+    .R15(DataHzrdPCNext[dataHzrdDetected]), .BL(BL), .we(o_RegWrite_W),
     .pc(o_wire_pc), .out1(i_read1_D), .out2(i_read2_D));
-    assign pc = DataHzrdPCNext[DataHzrdPCNext];
+    assign pc = DataHzrdPCNext[dataHzrdDetected];
 
 endmodule
-
