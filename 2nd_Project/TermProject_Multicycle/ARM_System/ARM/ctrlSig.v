@@ -1,11 +1,11 @@
 module signalcontrol(
-   input[11:0] flags,
-   input zero,
-   output reg [2:0] total,
-   output reg [19:0] s2,
-   output reg [19:0] s3,
-   output reg [19:0] s4);
-   
+	input[11:0] flags,
+	input zero,
+	output reg [2:0] total,
+	output reg [19:0] s2,
+	output reg [19:0] s3,
+	output reg [19:0] s4);
+	
  always @ (*) begin
   if((flags[11]&flags[10]&flags[9])||(flags[8]^zero)) begin
    if(flags[7]) begin //B, BL
@@ -76,41 +76,41 @@ module signalcontrol(
 endmodule 
 
 module oneAdder(
-   input clk,
-   input reset,
-   input [2:0] current,
-   output reg[2:0] regout);
-   
-   wire last;
-   
-   assign last=current==regout;
-   
-   always @ (posedge clk,posedge reset)
-   if(reset)
-      regout<='b000;
-   else if(last)
-      regout<='b000;
-   else
-      regout<=regout+'b001;   
+	input clk,
+	input reset,
+	input [2:0] current,
+	output reg[2:0] regout);
+	
+	wire last;
+	
+	assign last=current==regout;
+	
+	always @ (posedge clk,posedge reset)
+	if(reset)
+		regout<='b000;
+	else if(last)
+		regout<='b000;
+	else
+		regout<=regout+'b001;	
 endmodule
 
 module signalunit
-   (input clk,
-    input reset,
-    input[11:0] flags,
-    input zero,
-    output Mwrite,
-    output IRwrite,
-    output Mread,
-    output regwrite,
-    output[1:0] regdst,
-    output[1:0] regsrc,
-    output[1:0] ALUsrcA,
-    output[1:0] ALUsrcB,
-    output[3:0] ALUop,
-    output NZCVwrite,
-    output [1:0] immsrc,
-    output regbdst);
+	(input clk,
+	 input reset,
+	 input[11:0] flags,
+	 input zero,
+	 output Mwrite,
+	 output IRwrite,
+	 output Mread,
+	 output regwrite,
+	 output[1:0] regdst,
+	 output[1:0] regsrc,
+	 output[1:0] ALUsrcA,
+	 output[1:0] ALUsrcB,
+	 output[3:0] ALUop,
+	 output NZCVwrite,
+	 output [1:0] immsrc,
+	 output regbdst);
   
   wire [19:0] s [4:0];
   
@@ -123,12 +123,12 @@ module signalunit
   oneAdder Step(.clk (clk), .reset (reset), .current (total), .regout (step));
   
   signalcontrol bringSignal(
-   .flags (flags),
-   .zero (zero),
-   .total (total),
-   .s2 (s[2]),
-   .s3 (s[3]),
-   .s4 (s[4]));  
+	.flags (flags),
+	.zero (zero),
+	.total (total),
+	.s2 (s[2]),
+	.s3 (s[3]),
+	.s4 (s[4]));  
   
   assign Mwrite=s[step][19];
   assign IRwrite=s[step][18];
@@ -146,171 +146,132 @@ module signalunit
 endmodule
 
 module newControlUnit(
-   input [27:20] inst,
-   input [15:12] Rd,
-   
-   // IDRF
-   output RegSrc1,
-   output RegSrc2,
-   output [1:0]immSrc,
-   output BL,
-   
-   // EXE
-   output NZCVWrite,
-   output ALUSrc1,
-   output ALUSrc2,
-   output [3:0] InstOp,
-   output PCSrc,
-   
-   // MEM
-   output MemWrite,
-   output MemRead,
-   
-   // WB
-   output RegWrite,
-   output MemtoReg);
-   
-   reg [16:0] control;
-   
-   always @ (*) begin
-      if(inst[27] || Rd == 4'b1111) begin //B, BL
-         if(~inst[24] || Rd == 4'b1111) begin //B
-            control = 17'b10100010010010000;
-            // control = 17'b1010001001001xxxx;
-         end
-         else begin //BL
-            control = 17'b10101010010010000;
-            // control = 17'b1010101001001xxxx;
-         end
-      end
-      
-      else if(inst[26]) begin //LDR, STR
-         if(~inst[20]) begin //STR
-            control = {7'b0101001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 5'b01000};
-            // control = {7'b0101001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 5'b010xx};
-         end
-         else begin //LDR
-            control = {7'b0001001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 5'b00111};
-         end
-      end
-      
-      else // ALU
-         case(inst[24:21])/*
-            0 : //AND
-            1 : //EOR
-            2 : //SUB
-            4 : //ADD
-            5 : //ADC
-            6 : //SBC
-            12 : //ORR*/
-            10 : begin //CMP
-               control = {7'b0000011, ~inst[25], 9'b001000000};
-               // control = {7'b0000011, ~inst[25], 9'b00100xxxx};
-            end
-            13 : begin //MOV
-               control = {5'b00000, inst[20], 1'b0, ~inst[25], 9'b01000010};
-               // control = {5'b00000, inst[20], 1'b0, ~inst[25], 9'b01000xx10};
-            end
-            default : begin //ALU
-               control = {5'b00000, inst[20], 1'b0, ~inst[25], inst[24:21], 5'b00010};
-               // control = {5'b00000, inst[20], 1'b0, ~inst[25], inst[24:21], 5'b0xx10};
-            end
-         endcase
-   end
-         assign {RegSrc1, RegSrc2, immSrc, BL, NZCVWrite, ALUSrc1, ALUSrc2, InstOp, PCSrc, MemWrite, MemRead, RegWrite, MemtoReg} = control;
+	input [27:20] inst,
+	input [15:12] Rd,
+	
+	// IDRF
+	output RegSrc1,
+	output RegSrc2,
+	output [1:0]immSrc,
+	output BL,
+	
+	// EXE
+	output NZCVWrite,
+	output ALUSrc1,
+	output ALUSrc2,
+	output [3:0] InstOp,
+	output PCSrc,
+	
+	// MEM
+	output MemWrite,
+	output MemRead,
+	
+	// WB
+	output RegWrite,
+	output MemtoReg);
+	
+	reg [16:0] control;
+	
+	always @ (*) begin
+		if(inst[27] || Rd == 4'b1111) begin //B, BL
+			if(~inst[24] || Rd == 4'b1111) begin //B
+				control = 17'b10100010010010000;
+				// control = 17'b1010001001001xxxx;
+			end
+			else begin //BL
+				control = 17'b10101010010010000;
+				// control = 17'b1010101001001xxxx;
+			end
+		end
+		
+		else if(inst[26]) begin //LDR, STR
+			if(~inst[20]) begin //STR
+				control = {7'b0101001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 5'b01000};
+				// control = {7'b0101001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 5'b010xx};
+			end
+			else begin //LDR
+				control = {7'b0001001, inst[25], (inst[23] ? 4'b0100 : 4'b0010), 5'b00111};
+			end
+		end
+		
+		else // ALU
+			case(inst[24:21])/*
+				0 : //AND
+				1 : //EOR
+				2 : //SUB
+				4 : //ADD
+				5 : //ADC
+				6 : //SBC
+				12 : //ORR*/
+				10 : begin //CMP
+					control = {7'b0000011, ~inst[25], 9'b001000000};
+					// control = {7'b0000011, ~inst[25], 9'b00100xxxx};
+				end
+				13 : begin //MOV
+					control = {5'b00000, inst[20], 1'b0, ~inst[25], 9'b01000010};
+					// control = {5'b00000, inst[20], 1'b0, ~inst[25], 9'b01000xx10};
+				end
+				default : begin //ALU
+					control = {5'b00000, inst[20], 1'b0, ~inst[25], inst[24:21], 5'b00010};
+					// control = {5'b00000, inst[20], 1'b0, ~inst[25], inst[24:21], 5'b0xx10};
+				end
+			endcase
+	end
+			assign {RegSrc1, RegSrc2, immSrc, BL, NZCVWrite, ALUSrc1, ALUSrc2, InstOp, PCSrc, MemWrite, MemRead, RegWrite, MemtoReg} = control;
 
 endmodule
 module newHazardUnit(
-    // Data Hazard
-    input [3:0] read1, // reg1[i_RegSrc1_D]
-    input [3:0] read2, // reg2[i_RegSrc2_D]
-    input o_RegWrite_E,
-    input [3:0] o_WA3_E,
-    input o_RegWrite_M,
-    input [3:0] o_WA3_M,
-    input o_RegWrite_W,
-    input [3:0] o_WA3_W,
-    // clk needed?
-    
-    // Control Hazard
-    input i_PCSrc_D,
-    // need to be changed
+  // Data Hazard
+  input [3:0] read1, // reg1[i_RegSrc1_D]
+  input [3:0] read2, // reg2[i_RegSrc2_D]
+  input o_RegWrite_E,
+  input [3:0] o_WA3_E,
+  input o_RegWrite_M,
+  input [3:0] o_WA3_M,
+  input o_RegWrite_W,
+  input [3:0] o_WA3_W,
+  input i_PCSrc_D,
+  input [1:0] i_StallCntIn,
 
-    // Output. if dataHzrd == 1, Detected.
-    output dataHzrdDetected,
-    output ctrlHzrdDetected,
-    output stallIF,
-    output stallID,
-    output flushEX,
-    output flushID);
-    
-    reg [1:0] stallCnt;
-    reg stIF, stID, flEX, flID, dH, cH;
-    
-   always @ (*) begin
-      if(stallCnt > 0) begin
-         stallCnt = stallCnt - 1;
-         if(stallCnt == 0) begin
-            // stop making st signals
-            stIF = 0;
-            stID = 0;
-            flEX = 0;
-            flID = 0;
-         end
-      end
-      dH = (o_RegWrite_E && (read1 == o_WA3_E || read2 == o_WA3_E)) || (o_RegWrite_M && (read1 == o_WA3_M || read2 == o_WA3_M)) || (o_RegWrite_W && (read1 == o_WA3_W || read2 == o_WA3_W));
-      cH = i_PCSrc_D;
-      if(dH) begin
-         stallCnt = 3;
-         stIF = 1;
-         stID = 1;
-         flEX = 1;
-      end
-      if(cH) begin
-         stallCnt = 2;
-         flID = 1;
-      end
-   end
-      assign stallIF = stIF;
-      assign stallID = stID;
-      assign flushEX = flEX;
-      assign flushID = flID;
-      assign dataHzrdDetected = dH;
-      assign ctrlHzrdDetected = cH;
+  output [1:0] o_StallCntOut,
+  output dataHzrdDetected,
+  output ctrlHzrdDetected,
+  output stallIF,
+  output stallID,
+  output flushEX,
+  output flushID);
+	assign dataHzrdDetected = (o_RegWrite_E && (read1 == o_WA3_E || read2 == o_WA3_E)) ||
+                            (o_RegWrite_M && (read1 == o_WA3_M || read2 == o_WA3_M)) ||
+                            (o_RegWrite_W && (read1 == o_WA3_W || read2 == o_WA3_W));
+	assign ctrlHzrdDetected = i_PCSrc_D;
+	assign o_StallCntOut = (i_StallCntIn > 0) ? (i_StallCntIn - 1) : ((dataHzrdDetected) ? 3 : ((ctrlHzrdDetected) ? 2 : 0));
+	assign stallIF = (i_StallCntIn > 0) ? ((dataHzrdDetected) ? 1 : 0) : ((dataHzrdDetected) ? 1 : ((ctrlHzrdDetected) ? 0 : 0));
+assign stallID = (i_StallCntIn > 0) ? ((dataHzrdDetected) ? 1 : 0) : ((dataHzrdDetected) ? 1 : ((ctrlHzrdDetected) ? 0 : 0));
+assign flushEX = (i_StallCntIn > 0) ? ((dataHzrdDetected) ? 1 : 0) : ((dataHzrdDetected) ? 1 : ((ctrlHzrdDetected) ? 0 : 0));
+assign flushID = (i_StallCntIn > 0) ? 0 : ((dataHzrdDetected) ? 0 : ((ctrlHzrdDetected) ? 1 : 0));
+
 endmodule
+
+
 module newConditionUnit(
-   // decide to make this instruction valid or not
-   // also, write flags if it is necessary
-   // thus, this unit do two things : update flag, check the flag and condition 
-   // only check the zero flag, since it works well without any other opcodes.
-   
-   input [31:28] condition,
-   input [3:0] curFlags,
-   input [3:0] ALUFlags,
-   input flagWrite,
-   
-   output execute,
-   output [3:0] outputFlags
+  // decide to make this instruction valid or not
+  // also, write flags if it is necessary
+  // thus, this unit do two things : update flag, check the flag and condition 
+  // only check the zero flag, since it works well without any other opcodes.
+
+  input [31:28] condition,
+  input [3:0] curFlags,
+  input [3:0] ALUFlags,
+  input flagWrite,
+
+  output execute,
+  output [3:0] outputFlags
 );
 
-   reg e;
-   reg[3:0] oF;
-   always @ (*) begin
-      if(condition == 4'b1110) begin // ALWAYS
-         e = 1'b1;
-         if(flagWrite) oF = ALUFlags;
-         else oF = curFlags;
-      end
-      else if(condition[28]^curFlags[2]) begin // EQ, NE triggered
-         e = 1'b1;
-         if(flagWrite) oF = ALUFlags;
-         else oF = curFlags;
-      end
-      else begin // not terminate
-         e = 1'b0;
-         oF = curFlags;
-      end
-   end
-   assign execute = e;
-   assign outputFlags = oF;
+assign execute = (condition == 4'b1110) ? 1'b1 : ((condition[28] ^ curFlags[2]) ? 1'b1 : 1'b0);
+assign outputFlags = (execute && flagWrite) ? ALUFlags : curFlags;
+
+
 endmodule
+
+
