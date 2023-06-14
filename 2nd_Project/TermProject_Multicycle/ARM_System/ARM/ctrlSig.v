@@ -231,24 +231,18 @@ module newHazardUnit(
   input o_RegWrite_W,
   input [3:0] o_WA3_W,
   input i_PCSrc_D,
-  input [1:0] i_StallCntIn,
-
-  output [1:0] o_StallCntOut,
   output dataHzrdDetected,
   output ctrlHzrdDetected,
-  output stallIF,
-  output stallID,
-  output flushEX,
-  output flushID);
+  output stallIFID,
+  output flushIFID,
+  output flushIDEX);
 	assign dataHzrdDetected = (o_RegWrite_E && (read1 == o_WA3_E || read2 == o_WA3_E)) ||
                             (o_RegWrite_M && (read1 == o_WA3_M || read2 == o_WA3_M)) ||
                             (o_RegWrite_W && (read1 == o_WA3_W || read2 == o_WA3_W));
 	assign ctrlHzrdDetected = i_PCSrc_D;
-	assign o_StallCntOut = (i_StallCntIn > 0) ? (i_StallCntIn - 1) : ((dataHzrdDetected) ? 3 : ((ctrlHzrdDetected) ? 2 : 0));
-	assign stallIF = (i_StallCntIn > 0) ? ((dataHzrdDetected) ? 1 : 0) : ((dataHzrdDetected) ? 1 : ((ctrlHzrdDetected) ? 0 : 0));
-assign stallID = (i_StallCntIn > 0) ? ((dataHzrdDetected) ? 1 : 0) : ((dataHzrdDetected) ? 1 : ((ctrlHzrdDetected) ? 0 : 0));
-assign flushEX = (i_StallCntIn > 0) ? ((dataHzrdDetected) ? 1 : 0) : ((dataHzrdDetected) ? 1 : ((ctrlHzrdDetected) ? 0 : 0));
-assign flushID = (i_StallCntIn > 0) ? 0 : ((dataHzrdDetected) ? 0 : ((ctrlHzrdDetected) ? 1 : 0));
+	assign stallIFID = dataHzrdDetected;
+	assign flushIFID = ctrlHzrdDetected;
+	assign flushIDEX = ctrlHzrdDetected || dataHzrdDetected;
 
 endmodule
 
