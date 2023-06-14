@@ -23,6 +23,19 @@
    endcase
    end
 endmodule
+module register(
+   input[31:0] regin,
+   input clk,
+   input write,
+   input reset,
+   output reg[31:0] regout);
+   
+   always @ (posedge clk)
+   if(reset)
+      regout<='h0000;
+   else if(write)
+      regout<=regin;
+endmodule
 module register_1bit(
    input regin,
    input clk,
@@ -71,74 +84,6 @@ module register_5bit(
       regout<=regin;
    end
    
-endmodule
-
-module stall_register_2bit(
-  input [1:0] isHazard,
-  input [1:0] stallIn,
-  input clk,
-  input write,
-  input reset,
-  output reg [1:0] stallOut,
-  output reg isDataHzrd,
-  output reg isCtrlHzrd
-);
-
-  always @(posedge clk) begin
-    if (reset) begin
-        stallOut <= 2'b00;
-        isDataHzrd <= 1'b0;
-        isCtrlHzrd <= 1'b0;
-      end
-    else if (write) begin
-      // Write operation
-      case (isHazard)
-        2'b10: begin
-            stallOut <= 2'b11; // Data hazard detected, set stallOut to 3
-            isDataHzrd <= 1'b1;
-            isCtrlHzrd <= 1'b0;
-         end
-        2'b01: begin
-            stallOut <= 2'b10; // Control hazard detected, set stallOut to 2
-            isDataHzrd <= 1'b0;
-            isCtrlHzrd <= 1'b1;
-         end
-        default: begin
-            stallOut <= 2'b00; // Control hazard detected, set stallOut to 2
-            isDataHzrd <= 1'b0;
-            isCtrlHzrd <= 1'b0;
-         end
-      endcase
-    end else begin
-      // Decrement operation
-      case (stallOut)
-        2'b00: begin
-            stallOut <= 2'b00; // No need to decrement when stallOut is 0
-            isDataHzrd <= 1'b0;
-            isCtrlHzrd <= 1'b0;
-        end
-        2'b01: stallOut <= 2'b00; // Decrement data hazard stallOut to 0 after 1 cycle
-        2'b10: stallOut <= 2'b01; // Decrement control hazard stallOut to 1 after 1 cycle
-        2'b11: stallOut <= 2'b10; // Decrement data hazard stallOut to 2 after 1 cycle
-      endcase
-    end
-  end
-
-endmodule
-
-
-module register(
-   input[31:0] regin,
-   input clk,
-   input write,
-   input reset,
-   output reg[31:0] regout);
-   
-   always @ (posedge clk)
-   if(reset)
-      regout<='h0000;
-   else if(write)
-      regout<=regin;
 endmodule
 module decoder_4to16(
    input[3:0] in,
@@ -219,9 +164,7 @@ module stage_register_ifid (
     input [31:0] i_inst_F,
     output [31:0] o_inst_D
 );
-
     wire [31:0] inst_D;
-
     register reg_inst_D (
         .regin(i_inst_F),
         .clk(clk),
@@ -229,9 +172,7 @@ module stage_register_ifid (
         .reset(reset),
         .regout(inst_D)
     );
-
     assign o_inst_D = inst_D;
-
 endmodule
 module stage_register_idex (
     input clk, 
@@ -251,9 +192,9 @@ module stage_register_idex (
     input [3:0] i_WA3_D,
     input [4:0] i_shmt5_D,
     input i_MemRead_D,
-    input [1:0] i_isHazard,
-    input [1:0] i_stallIn,
     input i_NZCVWrite_D,
+    input [3:0] i_Cond_D,
+    input [3:0] i_Flags_D,
     output [31:0] o_read1_E,
     output [31:0] o_read2_E,
     output [31:0] o_imm32_E,
@@ -267,10 +208,9 @@ module stage_register_idex (
     output [3:0] o_WA3_E,
     output [4:0] o_shmt5_E,
     output o_MemRead_E,
-    output [1:0] o_stallOut,
-    output o_isDataHzrd,
-    output o_isCtrlHzrd,
-    output o_NZCVWrite_E);
+    output o_NZCVWrite_E,
+    output [3:0] o_Cond_E,
+    output [3:0] o_Flags_E);
 
     wire [31:0] read1_E;
     wire [31:0] read2_E;
@@ -285,27 +225,31 @@ module stage_register_idex (
     wire ALUSrc2_E;
     wire [3:0] WA3_E;
     wire [4:0] shmt5_E;
-    wire [1:0] stallOut;
-    wire isDataHzrd;
-    wire isCtrlHzrd;
     wire NZCVWrite_E;
+    wire [3:0] Cond_E;
+    wire [3:0] Flags_E;
     
-    stall_register_2bit reg_stall(
-      .isHazard(i_isHazard),
-      .stallIn(i_stallIn),
-      .clk(clk),
-      .write(i_isHazard[1] || i_isHazard[0]),
-      .reset(reset),
-      .stallOut(stallOut),
-      .isDataHzrd(isDataHzrd),
-      .isCtrlHzrd(isCtrlHzrd)
+   register_4bit reg_Cond_E (
+        .regin(i_Cond_D),
+        .clk(clk),
+        .write(~stop),
+        .reset(reset),
+        .regout(Cond_E)
+    );  
+      
+    register_4bit reg_Flags_E (
+        .regin(i_Flags_D),
+        .clk(clk),
+        .write(~stop),
+        .reset(reset),
+        .regout(Flags_E)
     );
 
     register reg_read1_E (
         .regin(i_read1_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(read1_E)
     );
 
@@ -313,7 +257,7 @@ module stage_register_idex (
         .regin(i_read2_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(read2_E)
     );
 
@@ -321,7 +265,7 @@ module stage_register_idex (
         .regin(i_imm32_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(imm32_E)
     );
 
@@ -329,7 +273,7 @@ module stage_register_idex (
         .regin(i_PCSrc_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(PCSrc_E)
     );
 
@@ -337,7 +281,7 @@ module stage_register_idex (
         .regin(i_RegWrite_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(RegWrite_E)
     );
 
@@ -345,7 +289,7 @@ module stage_register_idex (
         .regin(i_MemtoReg_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(MemtoReg_E)
     );
 
@@ -353,7 +297,7 @@ module stage_register_idex (
         .regin(i_MemWrite_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(MemWrite_E)
     );
 
@@ -361,7 +305,7 @@ module stage_register_idex (
         .regin(i_InstOp_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(InstOp_E)
     );
 
@@ -369,7 +313,7 @@ module stage_register_idex (
         .regin(i_ALUSrc1_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(ALUSrc1_E)
     );
 
@@ -377,7 +321,7 @@ module stage_register_idex (
         .regin(i_ALUSrc2_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(ALUSrc2_E)
     );
 
@@ -385,7 +329,7 @@ module stage_register_idex (
       .regin(i_WA3_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(WA3_E)
    );
 
@@ -393,7 +337,7 @@ module stage_register_idex (
         .regin(i_shmt5_D),
         .clk(clk),
         .write(~stop),
-        .reset(reset || isDataHzrd),
+        .reset(reset),
         .regout(shmt5_E)
     );
     
@@ -401,7 +345,7 @@ module stage_register_idex (
       .regin(i_MemRead_D),
       .clk(clk),
       .write(~stop),
-      .reset(reset || isDataHzrd),
+        .reset(reset),
       .regout(MemRead_E)
    );
    
@@ -409,7 +353,7 @@ module stage_register_idex (
       .regin(i_NZCVWrite_D),
       .clk(clk),
       .write(~stop),
-      .reset(reset || isDataHzrd),
+        .reset(reset),
       .regout(NZCVWrite_E));
    
 
@@ -426,10 +370,9 @@ module stage_register_idex (
    assign o_WA3_E = WA3_E;
     assign o_shmt5_E = shmt5_E;
     assign o_MemRead_E = MemRead_E;
-    assign o_stallOut = stallOut;
-    assign o_isDataHzrd = isDataHzrd;
-    assign o_isCtrlHzrd = isCtrlHzrd;
     assign o_NZCVWrite_E = NZCVWrite_E;
+    assign o_Cond_E = Cond_E;
+    assign o_Flags_E = Flags_E;
 
 endmodule
 module stage_register_exmem (
@@ -582,21 +525,21 @@ module stage_register_memwb (
    assign o_MemtoReg_W = MemtoReg_W;
    assign o_ALUOut_W = ALUOut_W;
    assign o_WA3_W = WA3_W;
-
 endmodule
-
 module armreduced(
    input clk,
    input reset,
-   input nIRQ,
-   input[31:0] inst,
-   input[31:0] readdata,
-   output memread,
-   output memwrite,
-   output [3:0] be,
    output[31:0] pc,
+   input[31:0] inst,
+   input nIRQ,
+   output [3:0] be,
    output[31:0] memaddr,
-   output[31:0] writedata);
+   output memwrite,
+   output memread,
+   output[31:0] writedata,
+   input[31:0] readdata);
+   
+   //-----------wires & registers-----------
    
    wire [31:0] i_wire_pc;
    wire [31:0] o_wire_pc;
@@ -638,8 +581,10 @@ module armreduced(
    wire [3:0] o_Cond_E;
    wire [3:0] o_WA3_E;
    wire o_MemRead_E;
+   wire [3:0] o_Flags;
    wire o_NZCVWrite_E;
-
+   wire [3:0] o_Flags_E;
+   
    // for EXMEM
      wire [31:0] i_ALUResult_E;
     wire [31:0] i_WriteData_E;
@@ -691,55 +636,26 @@ module armreduced(
    wire [31:0] Result_W [1:0];
    wire [31:0] input_inst;
    
-   // ----------WB------------------
-   assign Result_W[0] = o_ALUOut_W;
-   assign Result_W[1] = readdata;
-   stage_register_memwb MEMWB(
-    .clk(clk),
-    .reset(reset),
-    .flush(),
-    .stop(),
-   .i_RegWrite_M(o_RegWrite_M),
-   .i_MemtoReg_M(o_MemtoReg_M),
-   .i_ALUOut_M(o_ALUOut_M),
-   .i_WA3_M(o_WA3_M),
-   .o_RegWrite_W(o_RegWrite_W),
-   .o_MemtoReg_W(o_MemtoReg_W),
-   .o_ALUOut_W(o_ALUOut_W),
-   .o_WA3_W(o_WA3_W));
+   wire CondExE;
+    wire stallIF;
+    wire stallID;
+    wire flushEX;
+    wire flushID;
    
-   // ----------MEM----------------
-   stage_register_exmem EXMEM(
-   .clk(clk),
-    .reset(reset),
-    .flush(),
-    .stop(),
-    .i_ALUResult_E(i_ALUResult_E),
-    .i_WriteData_E(i_WriteData_E),
-    .i_WA3_E(o_WA3_E),
-    .i_RegWrite_E(o_RegWrite_E),
-    .i_MemtoReg_E(o_MemtoReg_E),
-    .i_MemWrite_E(o_MemWrite_E),
-    .i_MemRead_E(o_MemRead_E),
-    .o_ALUOut_M(o_ALUOut_M),
-    .o_WriteData_M(o_WriteData_M),
-    .o_WA3_M(o_WA3_M),
-    .o_RegWrite_M(o_RegWrite_M),
-    .o_MemtoReg_M(o_MemtoReg_M),
-    .o_MemWrite_M(o_MemWrite_M),
-    .o_MemRead_M(o_MemRead_M));
-   assign memwrite = o_MemWrite_M;
-   assign memaddr = o_ALUOut_M;
-   assign writedata = o_WriteData_M;
-   assign memread = o_MemRead_M;
-   assign be = 'b1111;
    
-   //---------EX------------------------
+   
+   //----------stage registers-----------
+   stage_register_ifid IFID(.clk(clk), 
+   .reset(reset), 
+   .flush(), 
+   .stop(stallIF), 
+   .i_inst_F(inst), 
+   .o_inst_D(o_inst_D));
    stage_register_idex IDEX(
     .clk(clk), 
     .reset(reset), 
-    .flush(), 
-    .stop(),
+    .flush(flushID), 
+    .stop(stallID),
     .i_read1_D(i_read1_D),
     .i_read2_D(i_read2_D),
     .i_imm32_D(i_imm32_D),
@@ -753,9 +669,9 @@ module armreduced(
    .i_WA3_D(o_inst_D[15:12]),
     .i_shmt5_D(o_inst_D[11:7]),
     .i_MemRead_D(i_MemRead_D),
-    .i_isHazard({dataHzrdDetected, ctrlHzrdDetected}),
-    .i_stallIn(i_stallIn),
     .i_NZCVWrite_D(i_NZCVWrite_D),
+    .i_Flags_D(o_Flags),
+    .i_Cond_D(o_inst_D[31:28]),
     .o_read1_E(o_read1_E),
     .o_read2_E(o_read2_E),
     .o_imm32_E(o_imm32_E),
@@ -769,39 +685,48 @@ module armreduced(
    .o_WA3_E(o_WA3_E),
     .o_shmt5_E(o_shmt5_E),
     .o_MemRead_E(o_MemRead_E),
-    .o_stallOut(o_stallOut),
-    .o_isDataHzrd(o_isDataHzrd),
-    .o_isCtrlHzrd(o_isCtrlHzrd),
-    .o_NZCVWrite_E(o_NZCVWrite_E));
-    assign ALU_A[0] = o_read1_E;
-   assign ALU_A[1] = 0;
-   assign ALU_B[0] = o_imm32_E;
-   assign ALU_B[1] = o_read2_E << o_shmt5_E;
-   assign i_WriteData_E = o_read2_E << o_shmt5_E;
-   register_4bit NZCVRegister(.regin(i_NZCV), .clk(clk), .write(o_NZCVWrite_E), .reset(reset), .regout(o_NZCV));
-   ALUopdecoder ALUopDecoder(
-   .instop (o_InstOp_E),
-   .aluop (ALUop_E));
-   ALU32bit ALU(
-      .inpa (ALU_A[o_ALUSrc1_E]),
-      .inpb (ALU_B[o_ALUSrc2_E]),
-      .cin (o_NZCV[1]),
-      .aluop (ALUop_E),
-      .result (i_ALUResult_E),
-      .negative (after_ALU_Flags[3]),
-      .zero (after_ALU_Flags[2]),
-      .cout (after_ALU_Flags[1]),
-      .overflow (after_ALU_Flags[0]));
-
-   //-----DECODE----------//
-   stage_register_ifid IFID(.clk(clk), .reset(reset || ctrlHzrdDetected || o_isCtrlHzrd), .flush(), .stop(dataHzrdDetected || o_isDataHzrd), .i_inst_F(input_inst), .o_inst_D(o_inst_D));
-   assign reg2_D[0] = o_inst_D[3:0];
-   assign reg2_D[1] = o_inst_D[15:12];
-   assign reg1_D[0] = o_inst_D[19:16];
-   assign reg1_D[1] = 'b1111;
-   signextmux Extend(.in(o_inst_D[23:0]), .select(immSrc_D), .extVal(i_imm32_D));
-   newControlUnit ControlUnit(.inst(o_inst_D[31:20]), 
-    .Flags(after_ALU_Flags), 
+    .o_NZCVWrite_E(o_NZCVWrite_E),
+    .o_Flags_E(o_Flags_E),
+    .o_Cond_E(o_Cond_E));
+    stage_register_exmem EXMEM(
+   .clk(clk),
+    .reset(reset),
+    .flush(flushEX),
+    .stop(),
+    .i_ALUResult_E(i_ALUResult_E),
+    .i_WriteData_E(i_WriteData_E),
+    .i_WA3_E(o_WA3_E),
+    .i_RegWrite_E(o_RegWrite_E && CondExE),
+    .i_MemtoReg_E(o_MemtoReg_E && CondExE),
+    .i_MemWrite_E(o_MemWrite_E && CondExE),
+    .i_MemRead_E(o_MemRead_E && CondExE),
+    .o_ALUOut_M(o_ALUOut_M),
+    .o_WriteData_M(o_WriteData_M),
+    .o_WA3_M(o_WA3_M),
+    .o_RegWrite_M(o_RegWrite_M),
+    .o_MemtoReg_M(o_MemtoReg_M),
+    .o_MemWrite_M(o_MemWrite_M),
+    .o_MemRead_M(o_MemRead_M));
+    
+    stage_register_memwb MEMWB(
+    .clk(clk),
+    .reset(reset),
+    .flush(),
+    .stop(),
+   .i_RegWrite_M(o_RegWrite_M),
+   .i_MemtoReg_M(o_MemtoReg_M),
+   .i_ALUOut_M(o_ALUOut_M),
+   .i_WA3_M(o_WA3_M),
+   .o_RegWrite_W(o_RegWrite_W),
+   .o_MemtoReg_W(o_MemtoReg_W),
+   .o_ALUOut_W(o_ALUOut_W),
+   .o_WA3_W(o_WA3_W));
+    //----------execution----------
+  
+    //IDRF stage
+   newControlUnit ControlUnit(
+   .inst(o_inst_D[27:20]),
+   .Rd(o_inst_D[15:12]),
     .RegSrc1(i_RegSrc1_D), 
     .RegSrc2(i_RegSrc2_D), 
     .immSrc(immSrc_D), 
@@ -815,7 +740,13 @@ module armreduced(
     .RegWrite(i_RegWrite_D),
     .MemtoReg(i_MemtoReg_D),
     .MemRead(i_MemRead_D));
+   assign reg2_D[0] = o_inst_D[3:0];
+   assign reg2_D[1] = o_inst_D[15:12];
+   assign reg1_D[0] = o_inst_D[19:16];
+   assign reg1_D[1] = 'b1111;
+   signextmux Extend(.in(o_inst_D[23:0]), .select(immSrc_D), .extVal(i_imm32_D));
     newHazardUnit HazardUnit(
+    // stall count LOGIC NEED TO BE ADD
    .read1(reg1_D[i_RegSrc1_D]),
     .read2(reg2_D[i_RegSrc2_D]),
     .o_RegWrite_E(o_RegWrite_E),
@@ -824,22 +755,60 @@ module armreduced(
     .o_WA3_M(o_WA3_M),
     .o_RegWrite_W(o_RegWrite_W),
     .o_WA3_W(o_WA3_W),
-    .i_PCSrc_D(i_PCSrc_D),
+    .i_PCSrc_D(o_PCSrc_E && CondExE),
     .dataHzrdDetected(dataHzrdDetected),
-    .ctrlHzrdDetected(ctrlHzrdDetected)); 
-    assign PCNext[0] = i_wire_pc + 4;
+    .ctrlHzrdDetected(ctrlHzrdDetected),
+   .stallIF(stallIF),
+    .stallID(stallID),
+    .flushEX(flushEX),
+    .flushID(flushID));
+   assign PCNext[0] = i_wire_pc + 4;
     assign PCNext[1] = i_ALUResult_E;
-    assign DataHzrdPCNext[0] = PCNext[o_PCSrc_E];
-    assign DataHzrdPCNext[1] = PCNext[0] - 4;
+    assign DataHzrdPCNext[0] = PCNext[o_PCSrc_E && CondExE];
+    assign DataHzrdPCNext[1] = PCNext[0] - 4; // current pc, same
     registerfile registerFile(.clk(clk), .reset(reset), .reg1(reg1_D[i_RegSrc1_D]), 
     .reg2(reg2_D[i_RegSrc2_D]), .regdst(o_WA3_W), .regsrc(Result_W[o_MemtoReg_W]), 
-    .R15(DataHzrdPCNext[dataHzrdDetected]), .BL(BL), .we(o_RegWrite_W), .pc(o_wire_pc), .out1(i_read1_D), .out2(i_read2_D));
-   assign pc = o_wire_pc;
-   assign i_wire_pc = o_wire_pc;
-   assign i_stallIn = o_stallOut;
-   assign i_NZCV = after_ALU_Flags;
+    .R15(DataHzrdPCNext[dataHzrdDetected]), .BL(BL), .we(o_RegWrite_W), 
+    .pc(o_wire_pc), .out1(i_read1_D), .out2(i_read2_D));
+    assign pc = o_wire_pc;
+    assign i_wire_pc = o_wire_pc;
+    
+    //EX stage
+    assign ALU_A[0] = o_read1_E;
+   assign ALU_A[1] = 0;
+   assign ALU_B[0] = o_imm32_E;
+   assign ALU_B[1] = o_read2_E << o_shmt5_E;
+   assign i_WriteData_E = o_read2_E << o_shmt5_E;
+   ALUopdecoder ALUopDecoder(
+   .instop (o_InstOp_E),
+   .aluop (ALUop_E));
+   ALU32bit ALU(
+   .inpa (ALU_A[o_ALUSrc1_E]),
+   .inpb (ALU_B[o_ALUSrc2_E]),
+   .cin (o_Flags_E[1]),
+   .aluop (ALUop_E),
+   .result (i_ALUResult_E),
+   .negative (after_ALU_Flags[3]),
+   .zero (after_ALU_Flags[2]),
+   .cout (after_ALU_Flags[1]),
+   .overflow (after_ALU_Flags[0]));
+   newConditionUnit CondUnit(
+   .condition(o_Cond_E),
+   .curFlags(o_Flags_E),
+   .ALUFlags(after_ALU_Flags),
+   .flagWrite(o_NZCVWrite_E),
+   .execute(CondExE),
+   .outputFlags(o_Flags)
+   );
    
-   //------FETCH-----------//
-   assign input_inst = inst;
-
+   //MEM stage
+   assign memwrite = o_MemWrite_M;
+   assign memaddr = o_ALUOut_M;
+   assign writedata = o_WriteData_M;
+   assign memread = o_MemRead_M;
+   assign be = 'b1111;
+   
+   //WB stage
+   assign Result_W[0] = o_ALUOut_W;
+   assign Result_W[1] = readdata;
 endmodule
