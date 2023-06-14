@@ -556,9 +556,7 @@ module armreduced(
 	output[31:0] writedata,
 	input[31:0] readdata);
 	
-	//-----------wires & registers-----------
-	
-	wire [31:0] i_wire_pc;
+	//-----------wires-----------
 	wire [31:0] o_wire_pc;
 
 	// for IFID
@@ -574,7 +572,6 @@ module armreduced(
 	wire i_ALUSrc1_D;
 	wire i_ALUSrc2_D;
 	wire [3:0] i_InstOp_D;
-	wire i_FlagWrite_D;
 	wire [31:0] i_read1_D;
 	wire [31:0] i_read2_D;
 	wire [31:0] i_imm32_D;
@@ -586,11 +583,9 @@ module armreduced(
 	wire o_RegWrite_E;
 	wire o_MemtoReg_E;
 	wire o_MemWrite_E;
-	wire o_Branch_E;
 	wire o_ALUSrc1_E;
 	wire o_ALUSrc2_E;
 	wire [3:0] o_InstOp_E;
-	wire o_FlagWrite_E;
     wire [4:0] o_shmt5_E;
 	wire [31:0] o_read1_E;
 	wire [31:0] o_read2_E;
@@ -606,7 +601,6 @@ module armreduced(
   	wire [31:0] i_ALUResult_E;
     wire [31:0] i_WriteData_E;
     wire [3:0] i_WA3_E;
-    wire i_PCSrc_E;
     wire i_RegWrite_E;
     wire i_MemtoReg_E;
     wire i_MemWrite_E;
@@ -620,10 +614,8 @@ module armreduced(
     wire o_MemRead_M;
 
 	// for memwb
-	wire i_PCSrc_M;
 	wire i_RegWrite_M;
 	wire i_MemtoReg_M;
-	wire [31:0] i_ReadData_M;
 	wire [31:0] i_ALUOut_M;
 	wire [3:0] i_WA3_M;
 	wire o_RegWrite_W;
@@ -631,32 +623,29 @@ module armreduced(
 	wire [31:0] o_ALUOut_W;
 	wire [3:0] o_WA3_W;
 
-	wire [3:0] i_NZCV;
+	// NZCV (Updates at CondUnit, writes at IDEX stage register)
 	wire [3:0] o_NZCV;
-
-	wire [1:0] immSrc_D;
-	wire [3:0] reg2_D [1:0];
-	wire [3:0] reg1_D [1:0];
-	wire RegSrcD;
-	wire [31:0] PCNext [1:0];
-	wire [31:0] DataHzrdPCNext[1:0];
-
-	wire [31:0] ALU_A [1:0];
-	wire [31:0] ALU_B [1:0];
-	wire [2:0] ALUop_E;
-	wire dataHzrdDetected, ctrlHzrdDetected;
-	wire o_isDataHzrd,o_isCtrlHzrd;
-	wire [1:0] i_stallIn;
-	wire [1:0] o_stallOut;
 	wire [3:0] after_ALU_Flags;
 
+	// immedieate mux selector
+	wire [1:0] immSrc_D;
+
+	// MUX selctions
+	wire [3:0] reg2_D [1:0];
+	wire [3:0] reg1_D [1:0];
+	wire [31:0] PCNext [1:0];
+	wire [31:0] DataHzrdPCNext[1:0];
+	wire [31:0] ALU_A [1:0];
+	wire [31:0] ALU_B [1:0];
 	wire [31:0] Result_W [1:0];
-	wire [31:0] input_inst;
 	
+	// ALUOp
+	wire [2:0] ALUop_E;
+
+	// hazardDetection
+	wire dataHzrdDetected, ctrlHzrdDetected;
 	wire CondExE;
     wire stallIFID;
-    wire stallID;
-    wire flushEX;
     wire flushIDEX;
 	wire flushIFID;
 
@@ -738,7 +727,7 @@ module armreduced(
     .o_MemRead_E(o_MemRead_E),
     .o_NZCVWrite_E(o_NZCVWrite_E),
     .o_Flags_E(o_Flags_E),
-    .o_Cond_E(o_Cond_E),
+    .o_Cond_E(o_Cond_E));
 	assign ALU_A[0] = o_read1_E;
 	assign ALU_A[1] = 0;
 	assign ALU_B[0] = o_imm32_E;
