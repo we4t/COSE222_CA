@@ -557,6 +557,7 @@ module armreduced(
    input[31:0] readdata);
    
    //-----------wires-----------
+	wire [31:0] i_wire_pc;
    wire [31:0] o_wire_pc;
 
    // for IFID
@@ -797,14 +798,15 @@ module armreduced(
    .stallIFID(stallIFID),
     .flushIFID(flushIFID),
     .flushIDEX(flushIDEX));
-    assign PCNext[0] = o_wire_pc + 4;
+    assign PCNext[0] = i_wire_pc + 4;
     assign PCNext[1] = i_ALUResult_E;
    assign DataHzrdPCNext[0] = PCNext[o_PCSrc_E && CondExE];
-    assign DataHzrdPCNext[1] = PCNext[0] - 4; // current pc, same
+    assign DataHzrdPCNext[1] = i_wire_pc; // current pc, same
     registerfile registerFile(.clk(clk), .reset(reset), .reg1(reg1_D[i_RegSrc1_D]), 
     .reg2(reg2_D[i_RegSrc2_D]), .regdst(o_WA3_W), .regsrc(Result_W[o_MemtoReg_W]), 
     .R15(DataHzrdPCNext[dataHzrdDetected]), .BL(BL), .we(o_RegWrite_W), 
     .pc(o_wire_pc), .out1(i_read1_D), .out2(i_read2_D));
-    assign pc = DataHzrdPCNext[dataHzrdDetected];
+	assign i_wire_pc = o_wire_pc;
+    assign pc = o_wire_pc;
 
 endmodule
