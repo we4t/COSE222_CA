@@ -1,0 +1,77 @@
+------------------------------------------------------------
+TimeQuest Timing Analyzer Summary
+------------------------------------------------------------
+
+Type  : Slow Model Setup 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk1'
+Slack : 4.029
+TNS   : 0.000
+
+Type  : Slow Model Setup 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk0'
+Slack : 16.057
+TNS   : 0.000
+
+Type  : Slow Model Hold 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk0'
+Slack : 0.391
+TNS   : 0.000
+
+Type  : Slow Model Hold 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk1'
+Slack : 2.645
+TNS   : 0.000
+
+Type  : Slow Model Recovery 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk0'
+Slack : 25.026
+TNS   : 0.000
+
+Type  : Slow Model Removal 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk0'
+Slack : 4.580
+TNS   : 0.000
+
+Type  : Slow Model Minimum Pulse Width 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk1'
+Slack : 16.391
+TNS   : 0.000
+
+Type  : Slow Model Minimum Pulse Width 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk0'
+Slack : 17.518
+TNS   : 0.000
+
+Type  : Slow Model Minimum Pulse Width 'CLOCK_27'
+Slack : 18.518
+TNS   : 0.000
+
+Type  : Fast Model Setup 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk1'
+Slack : 6.774
+TNS   : 0.000
+
+Type  : Fast Model Setup 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk0'
+Slack : 21.928
+TNS   : 0.000
+
+Type  : Fast Model Hold 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk0'
+Slack : 0.215
+TNS   : 0.000
+
+Type  : Fast Model Hold 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk1'
+Slack : 2.318
+TNS   : 0.000
+
+Type  : Fast Model Recovery 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk0'
+Slack : 31.269
+TNS   : 0.000
+
+Type  : Fast Model Removal 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk0'
+Slack : 2.485
+TNS   : 0.000
+
+Type  : Fast Model Minimum Pulse Width 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk1'
+Slack : 16.391
+TNS   : 0.000
+
+Type  : Fast Model Minimum Pulse Width 'ALTPLL_clkgen:pll0|altpll:altpll_component|_clk0'
+Slack : 17.518
+TNS   : 0.000
+
+Type  : Fast Model Minimum Pulse Width 'CLOCK_27'
+Slack : 18.518
+TNS   : 0.000
+
+------------------------------------------------------------

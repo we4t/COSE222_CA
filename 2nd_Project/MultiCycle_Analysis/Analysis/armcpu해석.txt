@@ -1,0 +1,223 @@
+1. signextmux ( == signextension with multiplexer)
+input : 
+	in 		24 bit
+	select 	2 bit
+output : 
+	extVal	32 bit
+	
+always @ (*)
+
+analyze : 
+	if select == 0 : 
+		# for 8 bit sign_extension
+		extVal = sign_extension(in[7:0])
+	
+	elif select == 1 :
+		# for 12 bit zero_extension
+		extVal = zero_extension(in[11:0])
+	
+	elif select == 2:
+		# for 24 bit << 2 sign_extension
+		extVal = sign_extension(in[23:0], 00)
+	
+	else:
+		extVal = 'h00000000
+
+-----------------------------------------------------------
+2. register_1bit
+input : 
+	regin, clk, write, reset	1bit
+
+output : 
+	regout						1bit
+
+always @ posedge clk, reset
+
+analyze : 
+	if reset == 1:
+		regout <= 0
+	elif write == 1:
+		regout <= regin
+
+-----------------------------------------------------------
+3. register
+input : 
+	regin				32bit
+	clk, write, reset 	1bit
+
+output :
+	regout 				32bit
+
+always @ posedge clk
+
+analyze :
+	if reset == 1:
+		regout <= 'h0000
+	elif write == 1:
+		regout <= regin;
+-----------------------------------------------------------
+4. decoder_4to16
+input :
+	in  		4bit
+
+output : 
+	out			16bit
+
+always @ (*)
+
+analyze : 
+	out = 2^in
+-----------------------------------------------------------
+5. registerfile
+input : 
+	clk, reset, we			1bit
+	# clock, reset, write enabled
+
+	reg1, reg2, regdst 		4bit
+	#register 1, register 2, regiister destination
+
+	regsrc					32bit
+	#register source
+	# regin : write 할 register value
+
+
+output : 
+	out1, out2, pc			32bit
+
+wire : 
+	wire[15:0] write;
+	wire[31:0] registers [15:0];
+	# array of 16 32bit registers : registers[16][32]
+	# 16 32bit registers
+
+analyze : 
+	write = 2^regdst;
+	for i in 0~15 : 
+	register registeri (.regin (regsrc), .write (write[i]&we), .clk (clk), .reset (reset), .regout (registers[i]));
+	# register 	: module 3
+	# regin : write 할 register value
+	# write : write[i]&we -> regdst의 값이 write할 register의 번호임.
+	# we 까지 켜져있어야 적힘. 
+	# clk, rest 생략
+	# regout : registers[i]
+	# 2차원 배열인 wire registers[16][32]의 register[i]를 연결해서 값을 덮어씌움.
+
+	assign out1=registers[reg1];
+	#out1 : register의 reg1번지의 값
+	assign out2=registers[reg2];
+	#out2 : register의 reg2번지의 값
+	assign pc=registers[15];
+	#pc : register[15]
+----------------------------------------------------------------------------------------------------------------------
+6. armreduced
+input : 
+	clk, reset, nIRQ							1bit
+	pc, inst, readdata							32bit
+
+output : 
+	memwrite, memread							1bit
+	be											4bit
+	pc, memaddr, writedata						32bit
+
+wires & registers : 
+	// signals
+	IRwrite, regwrite, NZCVwrite				1bit
+	regBdst										1bit
+	regdst, regsrc, ALUsrcA, immsrc, ALUsrcB	2bit
+	ALUop										3bit
+
+	// wires_out
+	imm											32bit
+
+	// wires_in
+	ALUflags									4bit
+	ALUresult, readA, readB						32bit
+
+	RFdst										[3][4] bits
+	# register fetch를 할 destination 3개의 번지들을 4개의 bit로 표현
+	RFsrc										[4][32] bits
+	# register을 fetch 해서 갖고 올 32bits의 값들을 4개 갖고 있음
+	ALUnum1										[3][32] bits
+	# alu 의 1번째 input에 들어갈 수 있는 3개의 가능성 값들
+	ALUnum2										[4][32] bits
+	# alu 의 2번째 input에 들어갈 수 있는 4개의 가능성 값들
+
+	// registers
+	be = 4'b1111 ( be = 1111 )					fixed_constant
+	A, B, instructions, mdr, ALUout 			32bits
+	n, v 										register, 1bit
+	z, c										wire, 1bit
+
+	mdr, luoutregister, a_register, b_register, InstructionRegister, z, c
+	# module로 값 수정
+
+	//mux
+
+	rfdst[0] = instructions[15:12]
+	rfdst[1] = 4b'1111
+	rfdst[2] = 4b'1110
+
+	rfsrc[0] = mdr
+	rfsrc[1] = aluoout
+	rfsrc[2] = ALUresult
+	rfsrc[3] = B
+
+	regBread[0] = instructions[3:0];
+	regBread[1] = instructions[15:12];
+
+	ALUnum1[0] = pc;
+	ALUnum1[1] = A;
+	ALUnum1[2] = 'h00000000;
+	
+	ALUnum2[0] = 'h00000004;
+	ALUnum2[1] = 'h00000008;
+	ALUnum2[2] = imm;
+	ALUnum2[3] = B<<instructions[11:7];
+
+	signalunit SignalControl(	
+		.clk (clk),
+		.reset (reset),
+		.flags (instructions[31:20]),
+		.zero (z),
+		.Mwrite (memwrite),
+		.IRwrite (IRwrite),
+		.Mread (memread),
+		.regwrite (regwrite),
+		.regdst (regdst),
+		.regsrc (regsrc),
+		.ALUsrcA (ALUsrcA),
+		.ALUsrcB (ALUsrcB),
+		.ALUop (instop),
+		.NZCVwrite (NZCVwrite),
+		.immsrc (immsrc),
+		.regbdst (regBdst));  
+	
+	registerfile RegisterFile(
+		.reg1 (instructions[19:16]),
+		.reg2 (regBread[regBdst]),
+		.regdst (RFdst[regdst]),
+		.regsrc (RFsrc[regsrc]),
+		.clk (clk),
+		.reset (reset),
+		.we (regwrite),
+		.out1 (readA),
+		.out2 (readB),
+		.pc (pc));
+
+	signextmux Immidiate(instructions[23:0],immsrc,imm);
+
+	ALUopdecoder ALUopDecoder(
+		.instop (instop),
+		.aluop (ALUop));
+	
+	ALU32bit ALU(
+		.inpa (ALUnum1[ALUsrcA]),
+		.inpb (ALUnum2[ALUsrcB]),
+		.cin (c),
+		.aluop (ALUop),
+		.result (ALUresult),
+		.negative (ALUflags[3]),
+		.zero (ALUflags[2]),
+		.cout (ALUflags[1]),
+		.overflow (ALUflags[0]));
+	
